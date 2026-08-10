@@ -102,7 +102,7 @@ function toRuntimeConfig(values: SetupValues): AzureDevOpsConfig {
     authMode: values.authMode,
     ...(values.pat ? { pat: values.pat } : {}),
     ...(values.defaultProject ? { defaultProject: values.defaultProject } : {}),
-    userAgent: "veriforce-azure-devops-mcp-setup/0.1.0",
+    userAgent: "azure-devops-pr-mcp-setup/0.1.0",
     requestTimeoutMs: 30_000,
     retryCount: 2,
     writeToolsEnabled: false,

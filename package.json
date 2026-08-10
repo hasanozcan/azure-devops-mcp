@@ -1,8 +1,8 @@
 {
-  "name": "@veriforce/azure-devops-mcp",
+  "name": "azure-devops-pr-mcp",
   "version": "0.1.0",
   "description": "Focused Azure DevOps Services MCP server for repository and pull request review workflows.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hasanozcan/azure-devops-mcp.git"
@@ -32,7 +32,7 @@
     "docs"
   ],
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "engines": {
     "node": ">=20"

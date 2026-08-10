@@ -156,14 +156,18 @@ npm run doctor
 
 ## Packaging
 
-The package is configured for restricted publication:
+The package is configured for public publication under the MIT license:
 
 ```powershell
 npm pack --dry-run
 npm publish
 ```
 
-Update the package scope/registry configuration before publishing if `@veriforce` is not the target organization.
+The npm package name is `azure-devops-pr-mcp`.
+
+## License
+
+MIT © 2026 Hasan Özcan. See [LICENSE](LICENSE).
 
 ## Scope
 
