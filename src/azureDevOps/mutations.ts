@@ -1,8 +1,11 @@
 import type { AzureDevOpsClient } from "./client.js";
 import { getCurrentIdentity } from "./identity.js";
-import { pullRequestPath } from "./paths.js";
+import { projectPath, pullRequestPath } from "./paths.js";
+import type { WorkItemComment } from "./workItems.js";
 import type { CommentThreadStatus, PullRequestComment, PullRequestThread, PullRequestVote, PullRequestReviewer } from "../types.js";
 import type { InlineTargetValidationResult } from "../review/inlineTargetValidator.js";
+
+const WORK_ITEM_COMMENTS_API_VERSION = "7.1-preview.4";
 
 const VOTE_VALUES: Record<PullRequestVote, number> = {
   approve: 10,
@@ -21,6 +24,20 @@ const THREAD_STATUS_VALUES: Record<CommentThreadStatus, number> = {
   byDesign: 5,
   pending: 6
 };
+
+export async function addWorkItemComment(
+  client: AzureDevOpsClient,
+  project: string,
+  workItemId: number,
+  text: string,
+  format: "markdown" | "html" = "markdown"
+): Promise<WorkItemComment> {
+  return client.post<WorkItemComment>(
+    projectPath(project, `_apis/wit/workItems/${workItemId}/comments`),
+    { text },
+    { format, "api-version": WORK_ITEM_COMMENTS_API_VERSION }
+  );
+}
 
 export async function createPullRequestComment(
   client: AzureDevOpsClient,

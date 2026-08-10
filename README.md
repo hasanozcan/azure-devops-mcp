@@ -1,6 +1,6 @@
 # Azure DevOps MCP Server
 
-Focused local MCP server for **Azure DevOps Services, Azure Repos, and Azure Boards**. It provides ticket-reading and pull-request-review workflows through 31 MCP tools backed by Azure DevOps REST API 7.1.
+Focused local MCP server for **Azure DevOps Services, Azure Repos, and Azure Boards**. It provides ticket and pull-request-review workflows through 32 MCP tools backed by Azure DevOps REST API 7.1.
 
 The server is intentionally narrower than Microsoft's general-purpose Azure DevOps MCP server. It focuses on the day-to-day workflow around work items, repositories, and pull requests.
 
@@ -14,6 +14,7 @@ The server is intentionally narrower than Microsoft's general-purpose Azure DevO
 - Resolve WIQL matches into useful work item summaries; queries return at most 100 items by default and 1,000 when explicitly requested.
 - Request custom Azure Boards fields when a smaller or specialized result is needed.
 - Read work item comments with paging, sort order, deleted-comment filtering, rendered text, and reactions.
+- Add Markdown or HTML comments to work items through a guarded write tool.
 - Resolve work items directly linked to a pull request.
 
 Example prompts:
@@ -23,6 +24,7 @@ Get work item 12345 with all fields, relations, and comments.
 List the open bugs assigned to me in the current project.
 Show the 20 most recently changed User Stories.
 Find active work items tagged production.
+Add a comment to work item 544 after I confirm the exact text.
 ```
 
 ### Projects, repositories, branches, and commits
@@ -60,10 +62,11 @@ Get the complete review context for PR 123 in repository hpower.
 Validate line 42 in src/app.ts as an inline-comment target.
 ```
 
-### Guarded pull request writes
+### Guarded writes
 
 When write tools are explicitly enabled, the server can:
 
+- Add Markdown or HTML comments to Azure Boards work items.
 - Create top-level PR comments.
 - Create validated inline comments.
 - Reply to an existing discussion thread.
@@ -81,8 +84,8 @@ Every write requires both `AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true` and `confirm=tr
 | Azure Boards | 3 | Work item details, WIQL queries, comments |
 | Pull requests and history | 10 | PR metadata, commits, threads, work items, iterations, reviewers |
 | Review and diff | 6 | Changed files, stats, unified diffs, inline validation, review context |
-| Guarded writes | 6 | Comments, replies, thread state, votes, request changes |
-| **Total** | **31** | |
+| Guarded writes | 7 | Work item/PR comments, replies, thread state, votes, request changes |
+| **Total** | **32** | |
 
 ## Requirements
 
@@ -134,7 +137,8 @@ AZURE_DEVOPS_PAT=your-token
 Recommended PAT permissions:
 
 - Code: Read for read-only repository and PR tools
-- Work Items: Read for work item details, WIQL queries, and comments
+- Work Items: Read for work item details, WIQL queries, and reading comments
+- Work Items: Read & write when work item comment creation is enabled
 - Code: Read & write when comment, thread, or vote tools are enabled
 
 Keep write tools disabled unless needed.
@@ -213,7 +217,7 @@ Diff bundles are cached in memory for two minutes. Binary and oversized files re
 
 ## Tools
 
-The server exposes 31 focused MCP tools. See [tool documentation](docs/tools.md).
+The server exposes 32 focused MCP tools. See [tool documentation](docs/tools.md).
 
 ## Validation
 

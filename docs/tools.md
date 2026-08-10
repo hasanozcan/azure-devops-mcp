@@ -53,6 +53,7 @@ Every mutation requires `AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true` and `confirm: tru
 
 | Tool | Purpose | Main inputs |
 | --- | --- | --- |
+| `add_work_item_comment` | Add a guarded Markdown or HTML comment to a work item | `workItemId`, `text`, optional `project`, `format`, `confirm` |
 | `create_pull_request_comment` | Create top-level PR thread | `repositoryId`, `pullRequestId`, `content`, `confirm` |
 | `create_pull_request_inline_comment` | Validate and create inline thread | PR target, `content`, `path`, line side/range, `confirm` |
 | `reply_to_pull_request_thread` | Reply in an existing thread | PR target, `threadId`, optional `parentCommentId`, `content`, `confirm` |

@@ -1,10 +1,28 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { FetchLike } from "../src/azureDevOps/client.js";
-import { createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
+import { addWorkItemComment, createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
 import { jsonResponse, makeClient } from "./helpers.js";
 
-describe("pull request mutations", () => {
+describe("Azure DevOps mutations", () => {
+  it("adds a Markdown comment to a work item through the comments preview API", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      expect(init?.method).toBe("POST");
+      expect(url.pathname).toContain("/Project%20One/_apis/wit/workItems/544/comments");
+      expect(url.searchParams.get("format")).toBe("markdown");
+      expect(url.searchParams.get("api-version")).toBe("7.1-preview.4");
+      expect(JSON.parse(String(init?.body))).toEqual({ text: "Implementation completed" });
+      return jsonResponse({ workItemId: 544, commentId: 12, text: "Implementation completed", format: "markdown" });
+    });
+    const client = makeClient(fetch, { writeToolsEnabled: true });
+
+    const result = await addWorkItemComment(client, "Project One", 544, "Implementation completed");
+
+    expect(result.workItemId).toBe(544);
+    expect(result.commentId).toBe(12);
+  });
+
   it("creates top-level comments with an active thread", async () => {
     const bodies: unknown[] = [];
     const fetch: FetchLike = async (_input, init) => {

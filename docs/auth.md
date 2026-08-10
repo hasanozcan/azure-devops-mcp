@@ -16,7 +16,8 @@ Suggested permissions:
 | Scenario | PAT permission |
 | --- | --- |
 | Repositories, branches, commits, PR metadata, diffs | Code: Read |
-| Work item details, WIQL queries, and comments | Work Items: Read |
+| Work item details, WIQL queries, and reading comments | Work Items: Read |
+| Add work item comments | Work Items: Read & write |
 | PR comments, thread status, reviewer vote | Code: Read & write |
 
 Use the shortest practical token expiration and keep `AZURE_DEVOPS_ENABLE_WRITE_TOOLS=false` for read-only installations.

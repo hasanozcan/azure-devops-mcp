@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 
 import type { AzureDevOpsClient } from "../azureDevOps/client.js";
 import {
+  addWorkItemComment,
   createPullRequestComment,
   createPullRequestInlineComment,
   replyToPullRequestThread,
@@ -16,10 +17,34 @@ import { requireConfirmation, requireWriteToolsEnabled, resolveProject, runReadT
 const projectSchema = z.string().trim().min(1).optional().describe("Project name or ID. Omit to use AZURE_DEVOPS_DEFAULT_PROJECT.");
 const repositorySchema = z.string().trim().min(1).describe("Repository name or ID.");
 const pullRequestIdSchema = z.number().int().positive().describe("Pull request numeric ID.");
+const workItemIdSchema = z.number().int().positive().describe("Work item numeric ID.");
 const contentSchema = z.string().trim().min(1).max(150_000).describe("Markdown comment body.");
+const workItemCommentTextSchema = z.string().trim().min(1).max(150_000).describe("Work item comment body.");
 const confirmSchema = z.boolean().describe("Must be true to perform the mutation.");
 
 export function registerWriteTools(server: McpServer, client: AzureDevOpsClient, diffService: PullRequestDiffService): void {
+  server.registerTool(
+    "add_work_item_comment",
+    {
+      title: "Add work item comment",
+      description: "Add a Markdown or HTML comment to an Azure Boards work item. Requires write tools and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        workItemId: workItemIdSchema,
+        text: workItemCommentTextSchema,
+        format: z.enum(["markdown", "html"]).optional().describe("Comment format; defaults to markdown."),
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, workItemId, text, format, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, workItemId }, async () => ({
+        comment: await addWorkItemComment(client, resolvedProject, workItemId, text, format ?? "markdown")
+      }));
+    }
+  );
+
   server.registerTool(
     "create_pull_request_comment",
     {
