@@ -1,6 +1,7 @@
 import type { AzureDevOpsClient } from "./client.js";
 import { getCurrentIdentity } from "./identity.js";
 import { projectPath, pullRequestPath, repositoryPath } from "./paths.js";
+import { getPullRequest } from "./pullRequests.js";
 import type { WorkItemComment } from "./workItems.js";
 import type { AzureDevOpsPullRequest, CommentThreadStatus, PullRequestComment, PullRequestThread, PullRequestVote, PullRequestReviewer } from "../types.js";
 import type { InlineTargetValidationResult } from "../review/inlineTargetValidator.js";
@@ -34,6 +35,16 @@ export interface CreatePullRequestOptions {
   reviewerIds?: string[];
   workItemIds?: number[];
   supportsIterations?: boolean;
+}
+
+export type PullRequestMergeStrategy = "noFastForward" | "squash" | "rebase" | "rebaseMerge";
+
+export interface CompletePullRequestOptions {
+  expectedSourceCommitId: string;
+  mergeStrategy: PullRequestMergeStrategy;
+  deleteSourceBranch?: boolean;
+  transitionWorkItems?: boolean;
+  mergeCommitMessage?: string;
 }
 
 export async function addWorkItemComment(
@@ -73,6 +84,49 @@ export async function createPullRequest(
       "api-version": "7.1",
       ...(options.supportsIterations !== undefined ? { supportsIterations: options.supportsIterations } : {})
     }
+  );
+}
+
+export async function completePullRequest(
+  client: AzureDevOpsClient,
+  project: string,
+  repositoryId: string,
+  pullRequestId: number,
+  options: CompletePullRequestOptions
+): Promise<AzureDevOpsPullRequest> {
+  const pullRequest = await getPullRequest(client, project, repositoryId, pullRequestId, {
+    includeCommits: false,
+    includeWorkItemRefs: false
+  });
+  if (pullRequest.status !== "active") {
+    throw new Error(`Pull request ${pullRequestId} is ${pullRequest.status}; only active pull requests can be completed`);
+  }
+  if (pullRequest.isDraft) {
+    throw new Error(`Pull request ${pullRequestId} is a draft and cannot be completed`);
+  }
+
+  const sourceCommitId = pullRequest.lastMergeSourceCommit?.commitId;
+  if (!sourceCommitId) {
+    throw new Error(`Pull request ${pullRequestId} did not return a current source commit`);
+  }
+  if (sourceCommitId.toLowerCase() !== options.expectedSourceCommitId.toLowerCase()) {
+    throw new Error(`Pull request ${pullRequestId} source branch changed; expected ${options.expectedSourceCommitId} but found ${sourceCommitId}`);
+  }
+
+  return client.patch<AzureDevOpsPullRequest>(
+    pullRequestPath(project, repositoryId, pullRequestId),
+    {
+      status: "completed",
+      lastMergeSourceCommit: { commitId: sourceCommitId },
+      completionOptions: {
+        mergeStrategy: options.mergeStrategy,
+        deleteSourceBranch: options.deleteSourceBranch ?? false,
+        transitionWorkItems: options.transitionWorkItems ?? false,
+        bypassPolicy: false,
+        ...(options.mergeCommitMessage !== undefined ? { mergeCommitMessage: options.mergeCommitMessage } : {})
+      }
+    },
+    { "api-version": "7.1" }
   );
 }
 

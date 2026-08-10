@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { FetchLike } from "../src/azureDevOps/client.js";
-import { addWorkItemComment, createPullRequest, createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
+import { addWorkItemComment, completePullRequest, createPullRequest, createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
 import { jsonResponse, makeClient } from "./helpers.js";
 
 describe("Azure DevOps mutations", () => {
@@ -62,6 +62,83 @@ describe("Azure DevOps mutations", () => {
     });
 
     expect(result.pullRequestId).toBe(77);
+  });
+
+  it("completes a pull request only at the reviewed source commit without bypassing policy", async () => {
+    const sourceCommitId = "a".repeat(40);
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (init?.method === "GET") {
+        return jsonResponse({
+          pullRequestId: 77,
+          status: "active",
+          title: "Ready",
+          sourceRefName: "refs/heads/feature/ready",
+          targetRefName: "refs/heads/develop",
+          isDraft: false,
+          repository: { id: "repo", name: "repo" },
+          lastMergeSourceCommit: { commitId: sourceCommitId }
+        });
+      }
+
+      expect(init?.method).toBe("PATCH");
+      expect(url.pathname).toContain("/Project%20One/_apis/git/repositories/repo/pullRequests/77");
+      expect(url.searchParams.get("api-version")).toBe("7.1");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        status: "completed",
+        lastMergeSourceCommit: { commitId: sourceCommitId },
+        completionOptions: {
+          mergeStrategy: "squash",
+          deleteSourceBranch: true,
+          transitionWorkItems: true,
+          bypassPolicy: false,
+          mergeCommitMessage: "Merge ticket 544"
+        }
+      });
+      return jsonResponse({
+        pullRequestId: 77,
+        status: "completed",
+        title: "Ready",
+        sourceRefName: "refs/heads/feature/ready",
+        targetRefName: "refs/heads/develop",
+        repository: { id: "repo", name: "repo" }
+      });
+    });
+    const client = makeClient(fetch, { writeToolsEnabled: true });
+
+    const result = await completePullRequest(client, "Project One", "repo", 77, {
+      expectedSourceCommitId: sourceCommitId,
+      mergeStrategy: "squash",
+      deleteSourceBranch: true,
+      transitionWorkItems: true,
+      mergeCommitMessage: "Merge ticket 544"
+    });
+
+    expect(result.status).toBe("completed");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects PR completion before PATCH when the source branch changed", async () => {
+    const fetch = vi.fn(async () =>
+      jsonResponse({
+        pullRequestId: 77,
+        status: "active",
+        title: "Changed",
+        sourceRefName: "refs/heads/feature/changed",
+        targetRefName: "refs/heads/develop",
+        repository: { id: "repo", name: "repo" },
+        lastMergeSourceCommit: { commitId: "b".repeat(40) }
+      })
+    );
+    const client = makeClient(fetch, { writeToolsEnabled: true });
+
+    await expect(
+      completePullRequest(client, "Project One", "repo", 77, {
+        expectedSourceCommitId: "a".repeat(40),
+        mergeStrategy: "noFastForward"
+      })
+    ).rejects.toThrow("source branch changed");
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it("creates top-level comments with an active thread", async () => {

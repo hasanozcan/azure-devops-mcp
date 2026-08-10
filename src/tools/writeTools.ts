@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 import type { AzureDevOpsClient } from "../azureDevOps/client.js";
 import {
   addWorkItemComment,
+  completePullRequest,
   createPullRequest,
   createPullRequestComment,
   createPullRequestInlineComment,
@@ -81,6 +82,43 @@ export function registerWriteTools(server: McpServer, client: AzureDevOpsClient,
           ...(supportsIterations !== undefined ? { supportsIterations } : {})
         })
       }));
+    }
+  );
+
+  server.registerTool(
+    "complete_pull_request",
+    {
+      title: "Complete pull request",
+      description: "Merge an active, non-draft PR without bypassing policies. Requires the reviewed source commit, write tools, and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        repositoryId: repositorySchema,
+        pullRequestId: pullRequestIdSchema,
+        expectedSourceCommitId: z.string().trim().regex(/^[0-9a-f]{40}$/i).describe("Exact source commit SHA reviewed and approved for merge."),
+        mergeStrategy: z.enum(["noFastForward", "squash", "rebase", "rebaseMerge"]),
+        deleteSourceBranch: z.boolean().optional().describe("Delete the source branch after completion; defaults to false."),
+        transitionWorkItems: z.boolean().optional().describe("Move linked work items to their next logical state; defaults to false."),
+        mergeCommitMessage: z.string().trim().min(1).max(4_000).optional(),
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, repositoryId, pullRequestId, expectedSourceCommitId, mergeStrategy, deleteSourceBranch, transitionWorkItems, mergeCommitMessage, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, repositoryId, pullRequestId }, async () => {
+        const pullRequest = await completePullRequest(client, resolvedProject, repositoryId, pullRequestId, {
+          expectedSourceCommitId,
+          mergeStrategy,
+          ...(deleteSourceBranch !== undefined ? { deleteSourceBranch } : {}),
+          ...(transitionWorkItems !== undefined ? { transitionWorkItems } : {}),
+          ...(mergeCommitMessage !== undefined ? { mergeCommitMessage } : {})
+        });
+        return {
+          pullRequest,
+          completedSourceCommitId: expectedSourceCommitId,
+          policyBypass: false
+        };
+      });
     }
   );
 

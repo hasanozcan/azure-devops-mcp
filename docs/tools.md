@@ -55,12 +55,24 @@ Every mutation requires `AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true` and `confirm: tru
 | --- | --- | --- |
 | `add_work_item_comment` | Add a guarded Markdown or HTML comment to a work item | `workItemId`, `text`, optional `project`, `format`, `confirm` |
 | `create_pull_request` | Create a same-repository PR, optionally as draft with reviewers/work items | `repositoryId`, `sourceBranch`, `targetBranch`, `title`, optional `description`, `isDraft`, `reviewerIds`, `workItemIds`, `supportsIterations`, `confirm` |
+| `complete_pull_request` | Merge an active, non-draft PR at an exact reviewed source commit; never bypass policy | PR target, `expectedSourceCommitId`, `mergeStrategy`, optional completion settings, `confirm` |
 | `create_pull_request_comment` | Create top-level PR thread | `repositoryId`, `pullRequestId`, `content`, `confirm` |
 | `create_pull_request_inline_comment` | Validate and create inline thread | PR target, `content`, `path`, line side/range, `confirm` |
 | `reply_to_pull_request_thread` | Reply in an existing thread | PR target, `threadId`, optional `parentCommentId`, `content`, `confirm` |
 | `update_pull_request_thread_status` | Set `active`, `fixed`, `wontFix`, `closed`, `byDesign`, or `pending` | PR target, `threadId`, `status`, `confirm` |
 | `set_pull_request_vote` | Cast authenticated user's review vote | PR target, `vote`, `confirm` |
 | `request_pull_request_changes` | Compatibility action for `waitForAuthor` | PR target, `confirm` |
+
+PR completion merge strategies:
+
+| Input | Behavior |
+| --- | --- |
+| `noFastForward` | Create a two-parent merge commit |
+| `squash` | Combine the PR changes into one target-branch commit |
+| `rebase` | Rebase the source branch and fast-forward the target |
+| `rebaseMerge` | Rebase, then create a two-parent merge commit |
+
+`deleteSourceBranch` and `transitionWorkItems` default to `false`. Policy bypass is never sent as `true`.
 
 Vote mapping:
 
@@ -80,3 +92,4 @@ Vote mapping:
 4. Call `validate_inline_comment_target` before proposing an inline comment.
 5. After explicit user approval, call `create_pull_request_inline_comment` with `confirm: true`.
 6. After all actionable feedback is posted, use `request_pull_request_changes` or `set_pull_request_vote` only with explicit approval.
+7. Before merging, call `get_pull_request` again, present its `lastMergeSourceCommit.commitId` and the merge strategy, then call `complete_pull_request` with that exact SHA only after explicit approval.
