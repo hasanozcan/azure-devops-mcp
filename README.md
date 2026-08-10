@@ -1,6 +1,6 @@
 # Azure DevOps MCP Server
 
-Focused local MCP server for **Azure DevOps Services, Azure Repos, and Azure Boards**. It provides ticket and pull-request-review workflows through 32 MCP tools backed by Azure DevOps REST API 7.1.
+Focused local MCP server for **Azure DevOps Services, Azure Repos, and Azure Boards**. It provides ticket and pull-request workflows through 33 MCP tools backed by Azure DevOps REST API 7.1.
 
 The server is intentionally narrower than Microsoft's general-purpose Azure DevOps MCP server. It focuses on the day-to-day workflow around work items, repositories, and pull requests.
 
@@ -67,6 +67,7 @@ Validate line 42 in src/app.ts as an inline-comment target.
 When write tools are explicitly enabled, the server can:
 
 - Add Markdown or HTML comments to Azure Boards work items.
+- Create same-repository pull requests with optional draft status, reviewers, linked work items, and iteration support.
 - Create top-level PR comments.
 - Create validated inline comments.
 - Reply to an existing discussion thread.
@@ -76,6 +77,12 @@ When write tools are explicitly enabled, the server can:
 
 Every write requires both `AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true` and `confirm=true`. Inline comments require an additional target-validation pass.
 
+Example prompt:
+
+```text
+Create a draft PR in hpower from feature/ticket-544 to develop, link work item 544, and ask for confirmation before submitting it.
+```
+
 ### Tool groups
 
 | Group | Count | Coverage |
@@ -84,8 +91,8 @@ Every write requires both `AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true` and `confirm=tr
 | Azure Boards | 3 | Work item details, WIQL queries, comments |
 | Pull requests and history | 10 | PR metadata, commits, threads, work items, iterations, reviewers |
 | Review and diff | 6 | Changed files, stats, unified diffs, inline validation, review context |
-| Guarded writes | 7 | Work item/PR comments, replies, thread state, votes, request changes |
-| **Total** | **32** | |
+| Guarded writes | 8 | PR creation, work item/PR comments, replies, thread state, votes, request changes |
+| **Total** | **33** | |
 
 ## Requirements
 
@@ -217,7 +224,7 @@ Diff bundles are cached in memory for two minutes. Binary and oversized files re
 
 ## Tools
 
-The server exposes 32 focused MCP tools. See [tool documentation](docs/tools.md).
+The server exposes 33 focused MCP tools. See [tool documentation](docs/tools.md).
 
 ## Validation
 
@@ -250,9 +257,9 @@ MIT © 2026 Hasan Özcan. See [LICENSE](LICENSE).
 
 Not included in the first release:
 
-- Azure Boards mutations, saved-query management, backlogs, or sprint administration
+- other Azure Boards mutations such as field/state updates, saved-query management, backlogs, or sprint administration
 - pipelines, builds, wikis, test plans, or Advanced Security
-- repository, branch, or PR creation
+- repository or branch creation
 - PR completion, abandonment, or merge
 - Azure DevOps Server/on-premises
 

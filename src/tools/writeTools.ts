@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 import type { AzureDevOpsClient } from "../azureDevOps/client.js";
 import {
   addWorkItemComment,
+  createPullRequest,
   createPullRequestComment,
   createPullRequestInlineComment,
   replyToPullRequestThread,
@@ -18,6 +19,7 @@ const projectSchema = z.string().trim().min(1).optional().describe("Project name
 const repositorySchema = z.string().trim().min(1).describe("Repository name or ID.");
 const pullRequestIdSchema = z.number().int().positive().describe("Pull request numeric ID.");
 const workItemIdSchema = z.number().int().positive().describe("Work item numeric ID.");
+const branchSchema = z.string().trim().min(1).max(512).describe("Branch name or refs/heads/... ref.");
 const contentSchema = z.string().trim().min(1).max(150_000).describe("Markdown comment body.");
 const workItemCommentTextSchema = z.string().trim().min(1).max(150_000).describe("Work item comment body.");
 const confirmSchema = z.boolean().describe("Must be true to perform the mutation.");
@@ -41,6 +43,43 @@ export function registerWriteTools(server: McpServer, client: AzureDevOpsClient,
       const resolvedProject = resolveProject(client, project);
       return runReadTool({ organization: client.organization, project: resolvedProject, workItemId }, async () => ({
         comment: await addWorkItemComment(client, resolvedProject, workItemId, text, format ?? "markdown")
+      }));
+    }
+  );
+
+  server.registerTool(
+    "create_pull_request",
+    {
+      title: "Create pull request",
+      description: "Create a same-repository Azure Repos pull request. Requires write tools and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        repositoryId: repositorySchema,
+        sourceBranch: branchSchema.describe("Source branch name or refs/heads/... ref."),
+        targetBranch: branchSchema.describe("Target branch name or refs/heads/... ref."),
+        title: z.string().trim().min(1).max(400),
+        description: z.string().trim().max(4_000).optional(),
+        isDraft: z.boolean().optional(),
+        reviewerIds: z.array(z.string().trim().min(1)).max(100).optional().describe("Optional Azure DevOps identity IDs."),
+        workItemIds: z.array(z.number().int().positive()).max(200).optional().describe("Optional work items to link."),
+        supportsIterations: z.boolean().optional().describe("Track subsequent source-branch pushes as reviewable iterations."),
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, repositoryId, sourceBranch, targetBranch, title, description, isDraft, reviewerIds, workItemIds, supportsIterations, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, repositoryId }, async () => ({
+        pullRequest: await createPullRequest(client, resolvedProject, repositoryId, {
+          sourceBranch,
+          targetBranch,
+          title,
+          ...(description !== undefined ? { description } : {}),
+          ...(isDraft !== undefined ? { isDraft } : {}),
+          ...(reviewerIds ? { reviewerIds } : {}),
+          ...(workItemIds ? { workItemIds } : {}),
+          ...(supportsIterations !== undefined ? { supportsIterations } : {})
+        })
       }));
     }
   );

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { FetchLike } from "../src/azureDevOps/client.js";
-import { addWorkItemComment, createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
+import { addWorkItemComment, createPullRequest, createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
 import { jsonResponse, makeClient } from "./helpers.js";
 
 describe("Azure DevOps mutations", () => {
@@ -21,6 +21,47 @@ describe("Azure DevOps mutations", () => {
 
     expect(result.workItemId).toBe(544);
     expect(result.commentId).toBe(12);
+  });
+
+  it("creates a draft pull request with normalized refs, reviewers, and linked work items", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      expect(init?.method).toBe("POST");
+      expect(url.pathname).toContain("/Project%20One/_apis/git/repositories/repo/pullrequests");
+      expect(url.searchParams.get("api-version")).toBe("7.1");
+      expect(url.searchParams.get("supportsIterations")).toBe("true");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        sourceRefName: "refs/heads/feature/ticket-544",
+        targetRefName: "refs/heads/develop",
+        title: "Implement ticket 544",
+        description: "Adds the requested behavior.",
+        isDraft: true,
+        reviewers: [{ id: "reviewer-1" }],
+        workItemRefs: [{ id: "544" }]
+      });
+      return jsonResponse({
+        pullRequestId: 77,
+        status: "active",
+        title: "Implement ticket 544",
+        sourceRefName: "refs/heads/feature/ticket-544",
+        targetRefName: "refs/heads/develop",
+        repository: { id: "repo", name: "repo" }
+      });
+    });
+    const client = makeClient(fetch, { writeToolsEnabled: true });
+
+    const result = await createPullRequest(client, "Project One", "repo", {
+      sourceBranch: "feature/ticket-544",
+      targetBranch: "develop",
+      title: "Implement ticket 544",
+      description: "Adds the requested behavior.",
+      isDraft: true,
+      reviewerIds: ["reviewer-1", "reviewer-1"],
+      workItemIds: [544, 544],
+      supportsIterations: true
+    });
+
+    expect(result.pullRequestId).toBe(77);
   });
 
   it("creates top-level comments with an active thread", async () => {

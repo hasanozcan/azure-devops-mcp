@@ -30,10 +30,11 @@ describe("MCP server", () => {
     expect(names).toContain("query_work_items");
     expect(names).toContain("get_work_item_comments");
     expect(names).toContain("add_work_item_comment");
+    expect(names).toContain("create_pull_request");
     expect(names).toContain("validate_inline_comment_target");
     expect(names).toContain("create_pull_request_inline_comment");
     expect(names).toContain("request_pull_request_changes");
-    expect(names).toHaveLength(32);
+    expect(names).toHaveLength(33);
   });
 
   it("blocks mutation calls before any network request when confirmation is false", async () => {
@@ -75,6 +76,31 @@ describe("MCP server", () => {
         project: "Project One",
         workItemId: 544,
         text: "Comment",
+        confirm: false
+      }
+    });
+
+    expect(result.isError).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("blocks pull request creation before any network request when confirmation is false", async () => {
+    const fetch = vi.fn(async () => jsonResponse({}));
+    const server = createServer(makeClient(fetch, { writeToolsEnabled: true }));
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+    closeCallbacks.push(async () => client.close(), async () => server.close());
+
+    const result = await client.callTool({
+      name: "create_pull_request",
+      arguments: {
+        project: "Project One",
+        repositoryId: "repo",
+        sourceBranch: "feature/ticket-544",
+        targetBranch: "develop",
+        title: "Implement ticket 544",
         confirm: false
       }
     });

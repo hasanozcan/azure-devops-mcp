@@ -1,8 +1,8 @@
 import type { AzureDevOpsClient } from "./client.js";
 import { getCurrentIdentity } from "./identity.js";
-import { projectPath, pullRequestPath } from "./paths.js";
+import { projectPath, pullRequestPath, repositoryPath } from "./paths.js";
 import type { WorkItemComment } from "./workItems.js";
-import type { CommentThreadStatus, PullRequestComment, PullRequestThread, PullRequestVote, PullRequestReviewer } from "../types.js";
+import type { AzureDevOpsPullRequest, CommentThreadStatus, PullRequestComment, PullRequestThread, PullRequestVote, PullRequestReviewer } from "../types.js";
 import type { InlineTargetValidationResult } from "../review/inlineTargetValidator.js";
 
 const WORK_ITEM_COMMENTS_API_VERSION = "7.1-preview.4";
@@ -25,6 +25,17 @@ const THREAD_STATUS_VALUES: Record<CommentThreadStatus, number> = {
   pending: 6
 };
 
+export interface CreatePullRequestOptions {
+  sourceBranch: string;
+  targetBranch: string;
+  title: string;
+  description?: string;
+  isDraft?: boolean;
+  reviewerIds?: string[];
+  workItemIds?: number[];
+  supportsIterations?: boolean;
+}
+
 export async function addWorkItemComment(
   client: AzureDevOpsClient,
   project: string,
@@ -36,6 +47,32 @@ export async function addWorkItemComment(
     projectPath(project, `_apis/wit/workItems/${workItemId}/comments`),
     { text },
     { format, "api-version": WORK_ITEM_COMMENTS_API_VERSION }
+  );
+}
+
+export async function createPullRequest(
+  client: AzureDevOpsClient,
+  project: string,
+  repositoryId: string,
+  options: CreatePullRequestOptions
+): Promise<AzureDevOpsPullRequest> {
+  const reviewerIds = [...new Set(options.reviewerIds ?? [])];
+  const workItemIds = [...new Set(options.workItemIds ?? [])];
+  return client.post<AzureDevOpsPullRequest>(
+    repositoryPath(project, repositoryId, "pullrequests"),
+    {
+      sourceRefName: normalizeBranchRef(options.sourceBranch),
+      targetRefName: normalizeBranchRef(options.targetBranch),
+      title: options.title,
+      ...(options.description !== undefined ? { description: options.description } : {}),
+      ...(options.isDraft !== undefined ? { isDraft: options.isDraft } : {}),
+      ...(reviewerIds.length > 0 ? { reviewers: reviewerIds.map((id) => ({ id })) } : {}),
+      ...(workItemIds.length > 0 ? { workItemRefs: workItemIds.map((id) => ({ id: String(id) })) } : {})
+    },
+    {
+      "api-version": "7.1",
+      ...(options.supportsIterations !== undefined ? { supportsIterations: options.supportsIterations } : {})
+    }
   );
 }
 
@@ -136,4 +173,10 @@ export async function setPullRequestVote(
     vote,
     voteValue
   };
+}
+
+function normalizeBranchRef(value: string): string {
+  if (value.startsWith("refs/heads/")) return value;
+  if (value.startsWith("refs/")) throw new Error("Pull request branches must use refs/heads/<branch> refs");
+  return `refs/heads/${value}`;
 }
