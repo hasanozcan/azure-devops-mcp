@@ -11,8 +11,14 @@ import { AzureDevOpsClient } from "./azureDevOps/client.js";
 import { loadConfig } from "./config.js";
 import { PullRequestDiffService } from "./review/diffEngine.js";
 import { registerCoreTools } from "./tools/coreTools.js";
+import { registerBoardWriteTools } from "./tools/boardWriteTools.js";
+import { registerBranchTools } from "./tools/branchTools.js";
+import { registerPipelineTools } from "./tools/pipelineTools.js";
+import { registerPrLifecycleTools } from "./tools/prLifecycleTools.js";
 import { registerPullRequestTools } from "./tools/pullRequestTools.js";
+import { registerQualityTools } from "./tools/qualityTools.js";
 import { registerReviewTools } from "./tools/reviewTools.js";
+import { registerSprintTools } from "./tools/sprintTools.js";
 import { registerWorkItemTools } from "./tools/workItemTools.js";
 import { registerWriteTools } from "./tools/writeTools.js";
 
@@ -20,11 +26,11 @@ export function createServer(client: AzureDevOpsClient = new AzureDevOpsClient(l
   const server = new McpServer(
     {
       name: "azure-devops-mcp",
-      version: "0.1.0"
+      version: "0.2.0"
     },
     {
       instructions:
-        "Focused Azure DevOps Services server for Azure Repos, Azure Boards work items, and pull request review. Read tools are enabled by default. Mutations require both AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true and confirm=true.",
+        "Azure DevOps Services MCP server for Boards, Repos, pull request review, Pipelines, sprints, backlog planning, and delivery reporting. Read tools are enabled by default. Mutations require both AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true and confirm=true; policy bypass is never used.",
       capabilities: {
         tools: {}
       }
@@ -34,9 +40,15 @@ export function createServer(client: AzureDevOpsClient = new AzureDevOpsClient(l
   const diffService = new PullRequestDiffService(client);
   registerCoreTools(server, client);
   registerWorkItemTools(server, client);
+  registerBoardWriteTools(server, client);
   registerPullRequestTools(server, client);
   registerReviewTools(server, client, diffService);
   registerWriteTools(server, client, diffService);
+  registerPrLifecycleTools(server, client);
+  registerBranchTools(server, client);
+  registerPipelineTools(server, client);
+  registerSprintTools(server, client);
+  registerQualityTools(server, client);
   return server;
 }
 

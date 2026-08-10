@@ -32,10 +32,17 @@ describe("MCP server", () => {
     expect(names).toContain("add_work_item_comment");
     expect(names).toContain("create_pull_request");
     expect(names).toContain("complete_pull_request");
+    expect(names).toContain("create_work_item");
+    expect(names).toContain("update_work_item");
+    expect(names).toContain("set_pull_request_auto_complete");
+    expect(names).toContain("compare_branches");
+    expect(names).toContain("run_pipeline");
+    expect(names).toContain("get_iteration_velocity");
+    expect(names).toContain("get_pull_request_merge_readiness");
     expect(names).toContain("validate_inline_comment_target");
     expect(names).toContain("create_pull_request_inline_comment");
     expect(names).toContain("request_pull_request_changes");
-    expect(names).toHaveLength(34);
+    expect(names).toHaveLength(64);
   });
 
   it("blocks mutation calls before any network request when confirmation is false", async () => {

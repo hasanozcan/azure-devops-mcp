@@ -14,7 +14,7 @@ import {
 } from "../azureDevOps/mutations.js";
 import { PullRequestDiffService } from "../review/diffEngine.js";
 import { validateInlineCommentTarget } from "../review/inlineTargetValidator.js";
-import { requireConfirmation, requireWriteToolsEnabled, resolveProject, runReadTool } from "./helpers.js";
+import { authorizeMutation, resolveProject, runReadTool } from "./helpers.js";
 
 const projectSchema = z.string().trim().min(1).optional().describe("Project name or ID. Omit to use AZURE_DEVOPS_DEFAULT_PROJECT.");
 const repositorySchema = z.string().trim().min(1).describe("Repository name or ID.");
@@ -273,9 +273,4 @@ export function registerWriteTools(server: McpServer, client: AzureDevOpsClient,
       }));
     }
   );
-}
-
-function authorizeMutation(client: AzureDevOpsClient, confirm: boolean): void {
-  requireConfirmation(confirm);
-  requireWriteToolsEnabled(client);
 }

@@ -1,7 +1,19 @@
 {
   "name": "azure-devops-pr-mcp",
-  "version": "0.1.0",
-  "description": "Local MCP server for Azure DevOps Boards, repositories, and pull request review workflows.",
+  "version": "0.2.0",
+  "description": "Local MCP server for Azure DevOps Boards, Repos, pull requests, Pipelines, sprints, and delivery automation.",
+  "keywords": [
+    "azure-devops",
+    "azure-boards",
+    "azure-repos",
+    "azure-pipelines",
+    "mcp",
+    "model-context-protocol",
+    "code-review",
+    "devops-automation",
+    "codex",
+    "typescript"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

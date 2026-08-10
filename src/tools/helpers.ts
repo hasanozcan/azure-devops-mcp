@@ -72,3 +72,8 @@ export function requireWriteToolsEnabled(client: AzureDevOpsClient): void {
     throw new Error("Mutation tools are disabled. Set AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true to enable them.");
   }
 }
+
+export function authorizeMutation(client: AzureDevOpsClient, confirm: boolean): void {
+  requireWriteToolsEnabled(client);
+  requireConfirmation(confirm);
+}

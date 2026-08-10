@@ -86,6 +86,7 @@ export interface PullRequestReviewer extends IdentityRef {
 
 export interface AzureDevOpsPullRequest {
   pullRequestId: number;
+  artifactId?: string;
   codeReviewId?: number;
   status: string;
   title: string;

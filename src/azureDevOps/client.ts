@@ -72,6 +72,26 @@ export class AzureDevOpsClient {
     return parseJsonResponse<T>(response);
   }
 
+  async postJsonPatch<T>(path: string, body: unknown, query: QueryParams = {}): Promise<T> {
+    const response = await this.request("POST", path, {
+      query,
+      body,
+      contentType: "application/json-patch+json",
+      accept: "application/json"
+    });
+    return parseJsonResponse<T>(response);
+  }
+
+  async postRaw<T>(path: string, body: BodyInit, contentType: string, query: QueryParams = {}): Promise<T> {
+    const response = await this.request("POST", path, {
+      query,
+      rawBody: body,
+      contentType,
+      accept: "application/json"
+    });
+    return parseJsonResponse<T>(response);
+  }
+
   async put<T>(path: string, body: unknown, query: QueryParams = {}): Promise<T> {
     const response = await this.request("PUT", path, { query, body, accept: "application/json" });
     return parseJsonResponse<T>(response);
@@ -82,10 +102,30 @@ export class AzureDevOpsClient {
     return parseJsonResponse<T>(response);
   }
 
+  async patchJsonPatch<T>(path: string, body: unknown, query: QueryParams = {}): Promise<T> {
+    const response = await this.request("PATCH", path, {
+      query,
+      body,
+      contentType: "application/json-patch+json",
+      accept: "application/json"
+    });
+    return parseJsonResponse<T>(response);
+  }
+
+  async delete(path: string, query: QueryParams = {}): Promise<void> {
+    await this.request("DELETE", path, { query, accept: "application/json" });
+  }
+
   private async request(
     method: string,
     path: string,
-    options: { query: QueryParams; body?: unknown; accept: string }
+    options: {
+      query: QueryParams;
+      body?: unknown;
+      rawBody?: BodyInit;
+      contentType?: string;
+      accept: string;
+    }
   ): Promise<Response> {
     const url = buildAzureDevOpsUrl(this.#config, path, options.query);
     const maxAttempts = method === "GET" || method === "HEAD" ? this.#config.retryCount + 1 : 1;
@@ -101,15 +141,17 @@ export class AzureDevOpsClient {
           authorization,
           "user-agent": this.#config.userAgent
         };
-        if (options.body !== undefined) {
-          headers["content-type"] = "application/json";
+        if (options.body !== undefined || options.rawBody !== undefined) {
+          headers["content-type"] = options.contentType ?? "application/json";
         }
+
+        const requestBody = options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
 
         const init: RequestInit = {
           method,
           headers,
           signal: controller.signal,
-          ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) })
+          ...(requestBody === undefined ? {} : { body: requestBody })
         };
 
         const response = await this.#fetch(url, init);
