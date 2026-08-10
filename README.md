@@ -4,7 +4,8 @@ Focused local MCP server for **Azure DevOps Services / Azure Repos**. It provide
 
 The server is intentionally narrower than Microsoft's general-purpose Azure DevOps MCP server. Its primary use case is pull request investigation and review:
 
-- repository, branch, pull request, commit, reviewer, thread, and linked work item reads
+- repository, branch, pull request, commit, reviewer, and thread reads
+- Azure Boards work item details, relations, WIQL queries, and pageable comments
 - pull request iteration and changed-file inspection
 - locally generated unified diffs and per-file statistics
 - a single-call pull request review context bundle
@@ -61,7 +62,7 @@ AZURE_DEVOPS_PAT=your-token
 Recommended PAT permissions:
 
 - Code: Read for read-only repository and PR tools
-- Work Items: Read for linked work item details
+- Work Items: Read for work item details, WIQL queries, and comments
 - Code: Read & write when comment, thread, or vote tools are enabled
 
 Keep write tools disabled unless needed.
@@ -140,7 +141,7 @@ Diff bundles are cached in memory for two minutes. Binary and oversized files re
 
 ## Tools
 
-The server exposes 28 focused MCP tools. See [tool documentation](docs/tools.md).
+The server exposes 31 focused MCP tools. See [tool documentation](docs/tools.md).
 
 ## Validation
 
@@ -173,7 +174,7 @@ MIT © 2026 Hasan Özcan. See [LICENSE](LICENSE).
 
 Not included in the first release:
 
-- Azure Boards beyond PR-linked work item reads
+- Azure Boards mutations, saved-query management, backlogs, or sprint administration
 - pipelines, builds, wikis, test plans, or Advanced Security
 - repository, branch, or PR creation
 - PR completion, abandonment, or merge

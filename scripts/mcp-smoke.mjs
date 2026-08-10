@@ -21,8 +21,8 @@ const client = new Client({ name: "azure-devops-mcp-smoke", version: "1.0.0" });
 try {
   await client.connect(transport);
   const response = await client.listTools();
-  if (response.tools.length !== 28) {
-    throw new Error(`Expected 28 tools, received ${response.tools.length}`);
+  if (response.tools.length !== 31) {
+    throw new Error(`Expected 31 tools, received ${response.tools.length}`);
   }
   process.stdout.write(`MCP stdio smoke passed: ${response.tools.length} tools registered.\n`);
 } finally {

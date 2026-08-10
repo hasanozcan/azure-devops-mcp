@@ -26,10 +26,13 @@ describe("MCP server", () => {
     const names = tools.tools.map((tool) => tool.name);
 
     expect(names).toContain("get_pull_request_review_context");
+    expect(names).toContain("get_work_item");
+    expect(names).toContain("query_work_items");
+    expect(names).toContain("get_work_item_comments");
     expect(names).toContain("validate_inline_comment_target");
     expect(names).toContain("create_pull_request_inline_comment");
     expect(names).toContain("request_pull_request_changes");
-    expect(names).toHaveLength(28);
+    expect(names).toHaveLength(31);
   });
 
   it("blocks mutation calls before any network request when confirmation is false", async () => {

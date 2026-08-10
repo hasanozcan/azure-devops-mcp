@@ -13,6 +13,7 @@ import { PullRequestDiffService } from "./review/diffEngine.js";
 import { registerCoreTools } from "./tools/coreTools.js";
 import { registerPullRequestTools } from "./tools/pullRequestTools.js";
 import { registerReviewTools } from "./tools/reviewTools.js";
+import { registerWorkItemTools } from "./tools/workItemTools.js";
 import { registerWriteTools } from "./tools/writeTools.js";
 
 export function createServer(client: AzureDevOpsClient = new AzureDevOpsClient(loadConfig().azureDevOps)): McpServer {
@@ -23,7 +24,7 @@ export function createServer(client: AzureDevOpsClient = new AzureDevOpsClient(l
     },
     {
       instructions:
-        "Focused Azure DevOps Services server for Azure Repos and pull request review. Read tools are enabled by default. Mutations require both AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true and confirm=true.",
+        "Focused Azure DevOps Services server for Azure Repos, Azure Boards work items, and pull request review. Read tools are enabled by default. Mutations require both AZURE_DEVOPS_ENABLE_WRITE_TOOLS=true and confirm=true.",
       capabilities: {
         tools: {}
       }
@@ -32,6 +33,7 @@ export function createServer(client: AzureDevOpsClient = new AzureDevOpsClient(l
 
   const diffService = new PullRequestDiffService(client);
   registerCoreTools(server, client);
+  registerWorkItemTools(server, client);
   registerPullRequestTools(server, client);
   registerReviewTools(server, client, diffService);
   registerWriteTools(server, client, diffService);

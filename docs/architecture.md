@@ -15,7 +15,7 @@ MCP client
 - `config.ts` validates all startup configuration and rejects placeholder credentials.
 - `azureDevOps/auth.ts` isolates PAT and Azure CLI token acquisition.
 - `azureDevOps/client.ts` owns authorization headers, API versioning, timeouts, safe retries, continuation tokens, and error normalization.
-- `azureDevOps/*.ts` modules are thin typed REST endpoint adapters.
+- `azureDevOps/*.ts` modules are thin typed REST endpoint adapters, including Azure Boards work items, WIQL, and comments.
 - `review/diffEngine.ts` owns PR iteration resolution, file content retrieval, bounded concurrency, diff generation, statistics, and short-lived caching.
 - `review/inlineTargetValidator.ts` resolves the exact iteration and `changeTrackingId` used by inline thread creation.
 - `tools/*.ts` define MCP schemas, response shapes, default-project resolution, and mutation gates.

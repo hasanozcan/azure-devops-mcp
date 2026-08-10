@@ -12,7 +12,8 @@ export async function getConnectionData(client: AzureDevOpsClient): Promise<Conn
   return client.get<ConnectionData>("_apis/connectionData", {
     connectOptions: 1,
     lastChangeId: -1,
-    lastChangeId64: -1
+    lastChangeId64: -1,
+    "api-version": "7.1-preview.1"
   });
 }
 

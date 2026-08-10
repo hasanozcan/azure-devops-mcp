@@ -13,6 +13,14 @@ All successful calls return JSON text plus `structuredContent`. Azure DevOps HTT
 | `get_clone_links` | Get HTTPS, SSH, and web URLs | `repositoryId`, optional `project` |
 | `list_branches` | List/filter repository branches | `repositoryId`, optional `project`, `filter`, `top`, `continuationToken` |
 
+## Azure Boards work item tools
+
+| Tool | Purpose | Main inputs |
+| --- | --- | --- |
+| `get_work_item` | Get one work item with all fields and relations by default | `workItemId`, optional `project`, `fields`, `asOf`, `expand` |
+| `query_work_items` | Run read-only WIQL and resolve matching item details | `wiql`, optional `project`, `top`, `timePrecision`, `fields` |
+| `get_work_item_comments` | List pageable comments for one work item | `workItemId`, optional `project`, paging, expansion, sort order |
+
 ## Pull request and history tools
 
 | Tool | Purpose | Main inputs |
