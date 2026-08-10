@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "azure-devops-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/dist/server.js"
+      ],
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
+      }
+    }
+  }
+}

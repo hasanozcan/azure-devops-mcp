@@ -1,0 +1,53 @@
+{
+  "name": "@veriforce/azure-devops-mcp",
+  "version": "0.1.0",
+  "description": "Focused Azure DevOps Services MCP server for repository and pull request review workflows.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hasanozcan/azure-devops-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hasanozcan/azure-devops-mcp/issues"
+  },
+  "homepage": "https://github.com/hasanozcan/azure-devops-mcp#readme",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/server.ts",
+    "doctor": "tsx src/doctor.ts",
+    "setup": "tsx src/setup.ts",
+    "start": "node dist/server.js",
+    "smoke:mcp": "node scripts/mcp-smoke.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:tests": "tsc -p tests/tsconfig.json --noEmit",
+    "prepack": "npm run build"
+  },
+  "bin": "./dist/server.js",
+  "files": [
+    "dist",
+    "README.md",
+    "docs"
+  ],
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.13.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "diff": "^9.0.0",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
