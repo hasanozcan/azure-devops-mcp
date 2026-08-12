@@ -112,8 +112,9 @@ export class AzureDevOpsClient {
     return parseJsonResponse<T>(response);
   }
 
-  async delete(path: string, query: QueryParams = {}): Promise<void> {
-    await this.request("DELETE", path, { query, accept: "application/json" });
+  async delete<T = void>(path: string, query: QueryParams = {}): Promise<T> {
+    const response = await this.request("DELETE", path, { query, accept: "application/json" });
+    return parseJsonResponse<T>(response);
   }
 
   private async request(

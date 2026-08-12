@@ -30,6 +30,8 @@ describe("MCP server", () => {
     expect(names).toContain("query_work_items");
     expect(names).toContain("get_work_item_comments");
     expect(names).toContain("add_work_item_comment");
+    expect(names).toContain("update_work_item_comment");
+    expect(names).toContain("delete_work_item_comment");
     expect(names).toContain("create_pull_request");
     expect(names).toContain("complete_pull_request");
     expect(names).toContain("create_work_item");
@@ -41,8 +43,10 @@ describe("MCP server", () => {
     expect(names).toContain("get_pull_request_merge_readiness");
     expect(names).toContain("validate_inline_comment_target");
     expect(names).toContain("create_pull_request_inline_comment");
+    expect(names).toContain("update_pull_request_comment");
+    expect(names).toContain("delete_pull_request_comment");
     expect(names).toContain("request_pull_request_changes");
-    expect(names).toHaveLength(64);
+    expect(names).toHaveLength(68);
   });
 
   it("blocks mutation calls before any network request when confirmation is false", async () => {
@@ -84,6 +88,31 @@ describe("MCP server", () => {
         project: "Project One",
         workItemId: 544,
         text: "Comment",
+        confirm: false
+      }
+    });
+
+    expect(result.isError).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("blocks pull request comment deletion before any network request when confirmation is false", async () => {
+    const fetch = vi.fn(async () => jsonResponse({}));
+    const server = createServer(makeClient(fetch, { writeToolsEnabled: true }));
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+    closeCallbacks.push(async () => client.close(), async () => server.close());
+
+    const result = await client.callTool({
+      name: "delete_pull_request_comment",
+      arguments: {
+        project: "Project One",
+        repositoryId: "repo",
+        pullRequestId: 77,
+        threadId: 9,
+        commentId: 2,
         confirm: false
       }
     });

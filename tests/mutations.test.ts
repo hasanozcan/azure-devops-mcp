@@ -1,7 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { FetchLike } from "../src/azureDevOps/client.js";
-import { addWorkItemComment, completePullRequest, createPullRequest, createPullRequestComment, createPullRequestInlineComment, setPullRequestVote } from "../src/azureDevOps/mutations.js";
+import {
+  addWorkItemComment,
+  completePullRequest,
+  createPullRequest,
+  createPullRequestComment,
+  createPullRequestInlineComment,
+  deletePullRequestComment,
+  deleteWorkItemComment,
+  setPullRequestVote,
+  updatePullRequestComment,
+  updateWorkItemComment
+} from "../src/azureDevOps/mutations.js";
 import { jsonResponse, makeClient } from "./helpers.js";
 
 describe("Azure DevOps mutations", () => {
@@ -21,6 +32,35 @@ describe("Azure DevOps mutations", () => {
 
     expect(result.workItemId).toBe(544);
     expect(result.commentId).toBe(12);
+  });
+
+  it("updates a work item comment through the comments preview API", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      expect(init?.method).toBe("PATCH");
+      expect(url.pathname).toContain("/Project%20One/_apis/wit/workItems/544/comments/12");
+      expect(url.searchParams.get("api-version")).toBe("7.1-preview.4");
+      expect(JSON.parse(String(init?.body))).toEqual({ text: "Türkçe açıklama" });
+      return jsonResponse({ workItemId: 544, commentId: 12, version: 2, text: "Türkçe açıklama", isDeleted: false });
+    });
+
+    const result = await updateWorkItemComment(makeClient(fetch, { writeToolsEnabled: true }), "Project One", 544, 12, "Türkçe açıklama");
+
+    expect(result).toMatchObject({ workItemId: 544, commentId: 12, version: 2, text: "Türkçe açıklama" });
+  });
+
+  it("deletes a work item comment and returns its soft-deleted representation", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      expect(init?.method).toBe("DELETE");
+      expect(url.pathname).toContain("/Project%20One/_apis/wit/workItems/544/comments/12");
+      expect(url.searchParams.get("api-version")).toBe("7.1-preview.4");
+      return jsonResponse({ workItemId: 544, commentId: 12, version: 3, text: "Old", isDeleted: true });
+    });
+
+    const result = await deleteWorkItemComment(makeClient(fetch, { writeToolsEnabled: true }), "Project One", 544, 12);
+
+    expect(result).toMatchObject({ workItemId: 544, commentId: 12, version: 3, isDeleted: true });
   });
 
   it("creates a draft pull request with normalized refs, reviewers, and linked work items", async () => {
@@ -155,6 +195,33 @@ describe("Azure DevOps mutations", () => {
       comments: [{ parentCommentId: 0, content: "Looks good", commentType: 1 }],
       status: 1
     });
+  });
+
+  it("updates a pull request thread comment", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      expect(init?.method).toBe("PATCH");
+      expect(url.pathname).toContain("/pullRequests/3/threads/9/comments/2");
+      expect(url.searchParams.get("api-version")).toBe("7.1");
+      expect(JSON.parse(String(init?.body))).toEqual({ content: "Türkçe açıklama" });
+      return jsonResponse({ id: 2, parentCommentId: 1, content: "Türkçe açıklama", commentType: "text" });
+    });
+
+    const result = await updatePullRequestComment(makeClient(fetch, { writeToolsEnabled: true }), "Project", "repo", 3, 9, 2, "Türkçe açıklama");
+
+    expect(result).toMatchObject({ id: 2, content: "Türkçe açıklama" });
+  });
+
+  it("deletes a pull request thread comment", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      expect(init?.method).toBe("DELETE");
+      expect(url.pathname).toContain("/pullRequests/3/threads/9/comments/2");
+      expect(url.searchParams.get("api-version")).toBe("7.1");
+      return new Response(null, { status: 200 });
+    });
+
+    await expect(deletePullRequestComment(makeClient(fetch, { writeToolsEnabled: true }), "Project", "repo", 3, 9, 2)).resolves.toBeUndefined();
   });
 
   it("creates inline comments with validated iteration and line context", async () => {

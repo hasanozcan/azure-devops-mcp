@@ -10,7 +10,7 @@ export function makeConfig(overrides: Partial<AzureDevOpsConfig> = {}): AzureDev
     authMode: "pat",
     pat: "unit-test-pat",
     defaultProject: "Project One",
-    userAgent: "azure-devops-mcp-tests/0.2.0",
+    userAgent: "azure-devops-mcp-tests/0.3.0",
     requestTimeoutMs: 1_000,
     retryCount: 0,
     writeToolsEnabled: false,

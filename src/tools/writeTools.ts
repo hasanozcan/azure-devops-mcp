@@ -8,8 +8,12 @@ import {
   createPullRequest,
   createPullRequestComment,
   createPullRequestInlineComment,
+  deletePullRequestComment,
+  deleteWorkItemComment,
   replyToPullRequestThread,
   setPullRequestVote,
+  updatePullRequestComment,
+  updateWorkItemComment,
   updatePullRequestThreadStatus
 } from "../azureDevOps/mutations.js";
 import { PullRequestDiffService } from "../review/diffEngine.js";
@@ -44,6 +48,50 @@ export function registerWriteTools(server: McpServer, client: AzureDevOpsClient,
       const resolvedProject = resolveProject(client, project);
       return runReadTool({ organization: client.organization, project: resolvedProject, workItemId }, async () => ({
         comment: await addWorkItemComment(client, resolvedProject, workItemId, text, format ?? "markdown")
+      }));
+    }
+  );
+
+  server.registerTool(
+    "update_work_item_comment",
+    {
+      title: "Update work item comment",
+      description: "Replace the text of an Azure Boards work item comment. Azure DevOps author and permission rules apply. Requires write tools and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        workItemId: workItemIdSchema,
+        commentId: z.number().int().positive().describe("Work item comment ID."),
+        text: workItemCommentTextSchema,
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, workItemId, commentId, text, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, workItemId, commentId }, async () => ({
+        comment: await updateWorkItemComment(client, resolvedProject, workItemId, commentId, text)
+      }));
+    }
+  );
+
+  server.registerTool(
+    "delete_work_item_comment",
+    {
+      title: "Delete work item comment",
+      description: "Soft-delete an Azure Boards work item comment. Azure DevOps author and permission rules apply. Requires write tools and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        workItemId: workItemIdSchema,
+        commentId: z.number().int().positive().describe("Exact work item comment ID to delete."),
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, workItemId, commentId, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, workItemId, commentId }, async () => ({
+        deleted: true,
+        comment: await deleteWorkItemComment(client, resolvedProject, workItemId, commentId)
       }));
     }
   );
@@ -205,6 +253,54 @@ export function registerWriteTools(server: McpServer, client: AzureDevOpsClient,
       return runReadTool({ organization: client.organization, project: resolvedProject, repositoryId, pullRequestId, threadId }, async () => ({
         comment: await replyToPullRequestThread(client, resolvedProject, repositoryId, pullRequestId, threadId, content, parentCommentId ?? 1)
       }));
+    }
+  );
+
+  server.registerTool(
+    "update_pull_request_comment",
+    {
+      title: "Update pull request comment",
+      description: "Replace a top-level or reply comment inside a pull request thread. Azure DevOps author and permission rules apply. Requires write tools and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        repositoryId: repositorySchema,
+        pullRequestId: pullRequestIdSchema,
+        threadId: z.number().int().positive(),
+        commentId: z.number().int().positive().describe("Comment ID inside the thread."),
+        content: contentSchema,
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, repositoryId, pullRequestId, threadId, commentId, content, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, repositoryId, pullRequestId, threadId, commentId }, async () => ({
+        comment: await updatePullRequestComment(client, resolvedProject, repositoryId, pullRequestId, threadId, commentId, content)
+      }));
+    }
+  );
+
+  server.registerTool(
+    "delete_pull_request_comment",
+    {
+      title: "Delete pull request comment",
+      description: "Soft-delete a top-level or reply comment inside a pull request thread. Azure DevOps author and permission rules apply. Requires write tools and confirm=true.",
+      inputSchema: {
+        project: projectSchema,
+        repositoryId: repositorySchema,
+        pullRequestId: pullRequestIdSchema,
+        threadId: z.number().int().positive(),
+        commentId: z.number().int().positive().describe("Exact comment ID inside the thread to delete."),
+        confirm: confirmSchema
+      }
+    },
+    async ({ project, repositoryId, pullRequestId, threadId, commentId, confirm }) => {
+      authorizeMutation(client, confirm);
+      const resolvedProject = resolveProject(client, project);
+      return runReadTool({ organization: client.organization, project: resolvedProject, repositoryId, pullRequestId, threadId, commentId }, async () => {
+        await deletePullRequestComment(client, resolvedProject, repositoryId, pullRequestId, threadId, commentId);
+        return { deleted: true };
+      });
     }
   );
 

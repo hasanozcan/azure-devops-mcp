@@ -43,6 +43,7 @@ Optimistic checks add resource-specific protection:
 
 - work item revision test (`expectedRevision`);
 - branch old object ID (`expectedObjectId`);
+- exact work item or PR/thread/comment IDs for comment edits and soft-deletes;
 - current PR iteration and inline `changeTrackingId`;
 - current PR source commit (`expectedSourceCommitId`);
 - policy bypass fixed to `false`.

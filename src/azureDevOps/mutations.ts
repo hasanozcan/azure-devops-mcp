@@ -61,6 +61,32 @@ export async function addWorkItemComment(
   );
 }
 
+export async function updateWorkItemComment(
+  client: AzureDevOpsClient,
+  project: string,
+  workItemId: number,
+  commentId: number,
+  text: string
+): Promise<WorkItemComment> {
+  return client.patch<WorkItemComment>(
+    projectPath(project, `_apis/wit/workItems/${workItemId}/comments/${commentId}`),
+    { text },
+    { "api-version": WORK_ITEM_COMMENTS_API_VERSION }
+  );
+}
+
+export async function deleteWorkItemComment(
+  client: AzureDevOpsClient,
+  project: string,
+  workItemId: number,
+  commentId: number
+): Promise<WorkItemComment> {
+  return client.delete<WorkItemComment>(
+    projectPath(project, `_apis/wit/workItems/${workItemId}/comments/${commentId}`),
+    { "api-version": WORK_ITEM_COMMENTS_API_VERSION }
+  );
+}
+
 export async function createPullRequest(
   client: AzureDevOpsClient,
   project: string,
@@ -189,6 +215,36 @@ export async function replyToPullRequestThread(
     content,
     commentType: 1
   });
+}
+
+export async function updatePullRequestComment(
+  client: AzureDevOpsClient,
+  project: string,
+  repositoryId: string,
+  pullRequestId: number,
+  threadId: number,
+  commentId: number,
+  content: string
+): Promise<PullRequestComment> {
+  return client.patch<PullRequestComment>(
+    pullRequestPath(project, repositoryId, pullRequestId, `threads/${threadId}/comments/${commentId}`),
+    { content },
+    { "api-version": "7.1" }
+  );
+}
+
+export async function deletePullRequestComment(
+  client: AzureDevOpsClient,
+  project: string,
+  repositoryId: string,
+  pullRequestId: number,
+  threadId: number,
+  commentId: number
+): Promise<void> {
+  await client.delete(
+    pullRequestPath(project, repositoryId, pullRequestId, `threads/${threadId}/comments/${commentId}`),
+    { "api-version": "7.1" }
+  );
 }
 
 export async function updatePullRequestThreadStatus(

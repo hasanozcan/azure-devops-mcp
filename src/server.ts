@@ -26,7 +26,7 @@ export function createServer(client: AzureDevOpsClient = new AzureDevOpsClient(l
   const server = new McpServer(
     {
       name: "azure-devops-mcp",
-      version: "0.2.0"
+      version: "0.3.0"
     },
     {
       instructions:

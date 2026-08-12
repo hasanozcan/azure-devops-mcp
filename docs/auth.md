@@ -16,9 +16,9 @@ Requests use Azure DevOps Basic authentication with an empty username and the PA
 | Scenario | PAT permission |
 | --- | --- |
 | Repositories, branches, commits, PR metadata, diffs, labels, policies | Code: Read |
-| PR creation/update/completion, comments, votes, reviewers, labels, branch create/delete | Code: Read & write |
+| PR creation/update/completion, comment create/edit/delete, votes, reviewers, labels, branch create/delete | Code: Read & write |
 | Work items, WIQL, comments, relations, updates, and sprint work items | Work Items: Read |
-| Work item creation/update/comments/relations/attachments and backlog reorder | Work Items: Read & write |
+| Work item creation/update, comment create/edit/delete, relations, attachments, and backlog reorder | Work Items: Read & write |
 | Pipeline definitions, runs, builds, and logs | Build: Read |
 | Pipeline queue, preview, and full rerun | Build: Read & execute |
 | Team iteration and capacity metadata | Project and Team: Read |
@@ -86,5 +86,6 @@ Doctor output is limited to non-secret identity, organization, project, and repo
 | Branch update rejected | Source/expected object ID does not match current ref state |
 | Inline validation failure | File/line is absent from the current PR iteration |
 | Merge rejected | Branch policies or current source SHA prevent completion |
+| Comment edit/delete rejected | The identity is not the author or lacks the required thread/work-item permission |
 
 Never commit `.env`; it is ignored by Git. Rotate a PAT immediately if it is exposed in a terminal transcript, issue, PR, or chat.

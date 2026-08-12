@@ -6,7 +6,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_RETRY_COUNT = 2;
 const DEFAULT_MAX_DIFF_FILE_BYTES = 1_048_576;
 const DEFAULT_MAX_DIFF_LINES = 5_000;
-const DEFAULT_USER_AGENT = "azure-devops-pr-mcp/0.2.0";
+const DEFAULT_USER_AGENT = "azure-devops-pr-mcp/0.3.0";
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const organization = normalizeOrganization(requireValue(env.AZURE_DEVOPS_ORGANIZATION, "AZURE_DEVOPS_ORGANIZATION"));

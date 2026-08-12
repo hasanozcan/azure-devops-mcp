@@ -1,6 +1,6 @@
 # Azure DevOps MCP Server
 
-Local Model Context Protocol (MCP) server for **Azure DevOps Services**. It exposes 64 tools for Azure Boards, Azure Repos, pull request review and lifecycle management, Azure Pipelines, team sprints/backlogs, and delivery reporting.
+Local Model Context Protocol (MCP) server for **Azure DevOps Services**. It exposes 68 tools for Azure Boards, Azure Repos, pull request review and lifecycle management, Azure Pipelines, team sprints/backlogs, and delivery reporting.
 
 Read tools are enabled by default. Every mutation requires both a server-side feature flag and an explicit per-call confirmation. Pull request completion and auto-complete never bypass branch policies.
 
@@ -11,7 +11,7 @@ Read tools are enabled by default. Every mutation requires both a server-side fe
 - Read work items, every field, relations, comments, and historical snapshots.
 - Run read-only WIQL `SELECT` queries and resolve the matching work items.
 - Create and update work items, including state, assignee, tags, area, sprint, and custom fields.
-- Add comments, parent/child/related/dependency/duplicate links, and attachments up to 10 MiB.
+- Add, edit, and soft-delete work item comments; add parent/child/related/dependency/duplicate links and attachments up to 10 MiB.
 - Use an expected revision to prevent stale work item updates.
 - Trace a ticket to linked pull requests, commits, builds, branches, and related work items.
 - Read the work item's field and relation update history.
@@ -30,7 +30,7 @@ Read tools are enabled by default. Every mutation requires both a server-side fe
 - Read commits, reviewers/votes, iterations, threads, comments, labels, and linked work items.
 - Generate bounded unified diffs locally and validate exact inline-comment targets.
 - Create and update PRs; switch draft state; abandon or reactivate a PR.
-- Add/remove reviewers and labels; create/reply/resolve review comments; cast votes.
+- Add/remove reviewers and labels; create, reply to, edit, soft-delete, and resolve review comments; cast votes.
 - Enable policy-respecting auto-complete or merge at an exact reviewed source SHA.
 - Evaluate merge readiness from draft/status, merge state, votes, required reviewers, unresolved threads, policy evaluations, and PR status checks.
 - Produce batch review summaries and stale PR reports.
@@ -58,15 +58,15 @@ Azure DevOps REST does not expose a generic failed-job-only rerun through this i
 | Group | Count | Coverage |
 | --- | ---: | --- |
 | Core and repository reads | 6 | Auth, projects, repositories, clone links, branch listing |
-| Azure Boards | 8 | Work items, WIQL, comments, create/update, relations, attachments |
+| Azure Boards | 10 | Work items, WIQL, comment lifecycle, create/update, relations, attachments |
 | Pull requests and history | 10 | PR metadata, commits, threads, iterations, reviewers, linked work items |
 | Review and diff | 6 | Changed files, stats, unified diffs, inline validation, review context |
-| PR review and lifecycle writes | 13 | PR create/update/merge, auto-complete, comments, votes, reviewers, labels |
+| PR review and lifecycle writes | 15 | PR create/update/merge, auto-complete, comment lifecycle, votes, reviewers, labels |
 | Branch lifecycle | 4 | Create, delete, compare, stale branches |
 | Pipelines and builds | 7 | Definitions, runs, queue/rerun, logs, build filters |
 | Sprints and backlog | 5 | Iterations, work items, capacity, velocity, reorder |
 | Quality and trace reports | 5 | Merge readiness, batch/stale reports, delivery trace, audit history |
-| **Total** | **64** | |
+| **Total** | **68** | |
 
 The complete input reference is in [docs/tools.md](docs/tools.md).
 
@@ -196,6 +196,7 @@ Additional safeguards:
 - inline comments validate the current iteration, file side, line range, and `changeTrackingId`;
 - PR completion requires the exact current source commit SHA;
 - PR completion and auto-complete always use `bypassPolicy: false`;
+- comment edits and deletes require exact work item or PR/thread/comment IDs, and Azure DevOps still enforces author and permission rules;
 - mutation requests are never automatically retried;
 - PATs, bearer tokens, and authorization headers never appear in tool or doctor output.
 
@@ -203,6 +204,8 @@ Additional safeguards:
 
 ```text
 Read work item 544, including comments, relations, and delivery links.
+Replace my English PR comment with this Turkish explanation after I confirm.
+Delete my duplicate reply from thread 42 after I confirm the comment ID.
 Move work item 544 to Project\Sprint 8 after I confirm.
 Create a branch feature/544 at this exact commit after I confirm.
 Review this Azure DevOps pull request URL and report merge blockers.
@@ -233,7 +236,7 @@ This release does not manage wikis, test plans, service connections, variable gr
 
 ## API references
 
-The adapters target Microsoft's Azure DevOps REST API 7.1 documentation for [Git](https://learn.microsoft.com/en-us/rest/api/azure/devops/git/?view=azure-devops-rest-7.1), [Work Item Tracking](https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/?view=azure-devops-rest-7.1), [Pipelines](https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/?view=azure-devops-rest-7.1), [Build](https://learn.microsoft.com/en-us/rest/api/azure/devops/build/?view=azure-devops-rest-7.1), and [Work/Sprints](https://learn.microsoft.com/en-us/rest/api/azure/devops/work/?view=azure-devops-rest-7.1).
+The adapters target Microsoft's Azure DevOps REST API 7.1 documentation for [Git](https://learn.microsoft.com/en-us/rest/api/azure/devops/git/?view=azure-devops-rest-7.1), [PR thread comments](https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-request-thread-comments?view=azure-devops-rest-7.1), [Work Item Tracking](https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/?view=azure-devops-rest-7.1), [work item comments](https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/comments?view=azure-devops-rest-7.1), [Pipelines](https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/?view=azure-devops-rest-7.1), [Build](https://learn.microsoft.com/en-us/rest/api/azure/devops/build/?view=azure-devops-rest-7.1), and [Work/Sprints](https://learn.microsoft.com/en-us/rest/api/azure/devops/work/?view=azure-devops-rest-7.1).
 
 ## License
 
